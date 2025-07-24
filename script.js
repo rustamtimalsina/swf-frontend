@@ -3,30 +3,39 @@ let currentQuestionId = null;
 let selectedOption = "";
 
 async function loadQuestion() {
-  const res = await fetch(`${BASE_URL}/api/question`);
-  const data = await res.json();
+  try {
+    const res = await fetch(`${BASE_URL}/api/question`);
+    if (!res.ok) throw new Error(`Server error: ${res.status}`);
+    const data = await res.json();
 
-  currentQuestionId = data.id;
-  selectedOption = "";
+    console.log("Fetched question:", data);
 
-  document.getElementById("questionText").innerText = data.question;
-  document.getElementById("feedback").innerText = "";
-  document.getElementById("submitBtn").style.display = "none";
+    document.getElementById("questionText").innerText = data.question;
+    document.getElementById("feedback").innerText = "";
+    document.getElementById("submitBtn").style.display = "none";
 
-  const optionsDiv = document.getElementById("options");
-  optionsDiv.innerHTML = "";
-  data.options.forEach(opt => {
-    const btn = document.createElement("button");
-    btn.innerText = opt;
-    btn.onclick = () => {
-      selectedOption = opt;
-      document.querySelectorAll("#options button").forEach(b => b.style.backgroundColor = "");
-      btn.style.backgroundColor = "#cceeff";
-      document.getElementById("submitBtn").style.display = "inline-block";
-    };
-    optionsDiv.appendChild(btn);
-  });
+    const optionsDiv = document.getElementById("options");
+    optionsDiv.innerHTML = "";
+    currentQuestionId = data.id;
+    selectedOption = "";
+
+    data.options.forEach(opt => {
+      const btn = document.createElement("button");
+      btn.innerText = opt;
+      btn.onclick = () => {
+        selectedOption = opt;
+        document.querySelectorAll("#options button").forEach(b => b.style.backgroundColor = "");
+        btn.style.backgroundColor = "#cceeff";
+        document.getElementById("submitBtn").style.display = "inline-block";
+      };
+      optionsDiv.appendChild(btn);
+    });
+  } catch (err) {
+    console.error("Failed to load question:", err);
+    document.getElementById("questionText").innerText = "⚠️ Failed to load question.";
+  }
 }
+
 
 async function submitAnswer() {
   const res = await fetch(`${BASE_URL}/api/check?id=${currentQuestionId}&selected=${selectedOption}`);
